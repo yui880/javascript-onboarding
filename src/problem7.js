@@ -1,14 +1,4 @@
-function problem7(user, friends, visitors) {
-  const classifiedFriends = classifyFriends(friends);
-  const friendScore = findMutualFriends(user, classifiedFriends);
-  const visitorScore = countVisitors(visitors);
-  const totalScore = calcScore(friendScore, visitorScore);
-  const excludedScore = excludeFriends(classifiedFriends[user], totalScore);
-  const sortedScore = sortScore(excludedScore);
-  return sortedScore;
-}
-
-const classifyFriends = (friends) => {
+const getFriendRelationship = (friends) => {
   const friendsObj = {};
   for (const friend of friends) {
     !friendsObj[friend[0]]
@@ -21,76 +11,81 @@ const classifyFriends = (friends) => {
   return friendsObj;
 };
 
-const findMutualFriends = (user, friends) => {
-  const countObj = {};
+const getFriendScore = (scores, user, friends) => {
+  const FRIEND_SCORE = 10;
   for (const key in friends) {
     if (key === user) continue;
     const tempPerson = friends[key].filter((person) => person !== user);
     const tempUser = friends[user].filter((person) => person !== key);
     const union = [...tempPerson, ...tempUser];
     const intersection = union.length - new Set(union).size;
-    countObj[key] = intersection;
+    scores[key].friend = intersection * FRIEND_SCORE;
   }
-  delete countObj[user];
-  return countObj;
 };
 
-const countVisitors = (visitors) => {
-  const countObj = {};
+const getVisitorScore = (scores, visitors) => {
   for (const person of visitors) {
-    countObj[person] = visitors.filter((p) => p === person).length;
+    scores[person].visit = visitors.filter((p) => p === person).length;
   }
-  return countObj;
 };
 
-const calcScore = (friendScore, visitorScore) => {
-  const totalScore = {};
-  const score = [];
-  for (const friend in friendScore) {
-    totalScore[friend] = friendScore[friend] * 10;
+const calculateScore = (scores) => {
+  for (const person in scores) {
+    scores[person].total = scores[person].friend + scores[person].visit;
   }
-  for (const visitor in visitorScore) {
-    if (totalScore[visitor]) totalScore[visitor] += visitorScore[visitor];
-    else totalScore[visitor] = visitorScore[visitor];
-  }
-  for (const key in totalScore) {
-    score.push([key, totalScore[key]]);
-  }
-  return score;
 };
 
-const excludeFriends = (friends, score) => {
-  for (const person of friends) {
-    score = score.filter((s) => s[0] !== person);
+const excludeFriends = (userFriends, scores) => {
+  for (const person of userFriends) {
+    delete scores[person];
   }
-  return score;
 };
 
-const sortScore = (score) => {
-  const ranked = [];
-  score.sort((a, b) => {
-    if (a[1] > b[1]) return -1;
-    if (a[1] <= b[1]) return 1;
+const sortScore = (scores) => {
+  let scoreList = [];
+  for (const person in scores) {
+    scoreList.push([person, scores[person].total]);
+  }
+  scoreList.sort((a, b) => {
+    if (a[1] < b[1]) return 1;
+    else if (a[1] > b[1]) return -1;
+    else {
+      if (a[0] < b[0]) return -1;
+      else return 1;
+    }
   });
-  for (let i = 0; i < 5; i++) {
-    if (!score[i]) continue;
-    if (score[i][0] === 0) continue;
-    ranked.push(score[i][0]);
-  }
-  return ranked;
+
+  scoreList = scoreList.map((score) => score[0]);
+  return scoreList.length < 5 ? scoreList : scoreList.slice(0, 6);
 };
 
-// problem7(
-//   "mrko",
-//   [
-//     ["donut", "andole"],
-//     ["donut", "jun"],
-//     ["donut", "mrko"],
-//     ["shakevan", "andole"],
-//     ["shakevan", "jun"],
-//     ["shakevan", "mrko"],
-//   ],
-//   ["bedi", "bedi", "donut", "bedi", "shakevan"],
-// );
+const getPeopleList = (user, friends, visitors) => {
+  const peopleList = new Set();
+
+  for (const friend of friends) {
+    peopleList.add(friend[0]);
+    peopleList.add(friend[1]);
+  }
+  for (const visitor of visitors) {
+    peopleList.add(visitor);
+  }
+  peopleList.delete(user);
+  return [...peopleList];
+};
+
+function problem7(user, friends, visitors) {
+  const classifiedFriends = getFriendRelationship(friends);
+  const people = getPeopleList(user, friends, visitors);
+  const scores = {};
+  people.forEach((person) => {
+    scores[person] = { friend: 0, visit: 0, total: 0 };
+  });
+
+  getFriendScore(scores, user, classifiedFriends);
+  getVisitorScore(scores, visitors);
+  calculateScore(scores);
+  excludeFriends(classifiedFriends[user], scores);
+  return sortScore(scores);
+}
 
 module.exports = problem7;
