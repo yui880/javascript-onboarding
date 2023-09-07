@@ -1,13 +1,3 @@
-function problem6(forms) {
-  const emails = forms.map((form) => form[0]);
-  const nicknames = forms.map((form) => form[1]);
-  const slicedNicknames = nicknames.map((nickname) =>
-    sliceTwoLetters(nickname),
-  );
-
-  return compareLetters(slicedNicknames, emails).sort();
-}
-
 const sliceTwoLetters = (str) => {
   const letters = [];
   for (let i = 1; i < str.length; i++) {
@@ -21,7 +11,7 @@ const compareLetters = (nicknames, emails) => {
   const len = nicknames.length;
   for (let i = 0; i < len; i++) {
     for (let j = i + 1; j < len; j++) {
-      const found = findDuplicate(nicknames[i], nicknames[j]);
+      const found = getIsDuplicate(nicknames[i], nicknames[j]);
       if (found === true) {
         duplicated.push(emails[i]);
         duplicated.push(emails[j]);
@@ -31,7 +21,7 @@ const compareLetters = (nicknames, emails) => {
   return [...new Set(duplicated)];
 };
 
-const findDuplicate = (first, second) => {
+const getIsDuplicate = (first, second) => {
   let isDuplicated = false;
   first.forEach((letter) => {
     const index = second.indexOf(letter);
@@ -39,5 +29,16 @@ const findDuplicate = (first, second) => {
   });
   return isDuplicated;
 };
+
+function problem6(forms) {
+  const emails = forms.map((form) => form[0]);
+  const nicknames = forms.map((form) => form[1]);
+
+  const slicedNicknames = nicknames.map((nickname) =>
+    sliceTwoLetters(nickname),
+  );
+
+  return compareLetters(slicedNicknames, emails).sort();
+}
 
 module.exports = problem6;
